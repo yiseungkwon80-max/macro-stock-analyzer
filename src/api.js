@@ -3,6 +3,14 @@
  * Vite proxy /api/quote → Express server (port 4000) → 네이버 증권 API
  */
 
+// ===================== API 기본 URL 설정 =====================
+// 개발 모드: '' (빈 문자열) → Vite 프록시가 localhost:4000 으로 전달
+// 운영 모드 (단일 Render): '' → 같은 도메인에서 서빙
+// 운영 모드 (GitHub Pages + Render): Render 백엔드 URL 입력
+//    예: 'https://macro-stock.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+// =============================================================
+
 const CHUNK_SIZE = 10;
 
 const KOSPI_STOCKS = {
@@ -75,7 +83,7 @@ export async function getQuotes(codes) {
   try {
     const results = await Promise.all(
       chunks.map(async (chunk) => {
-        const url = `/api/quote/${chunk.join(',')}`;
+        const url = `${API_BASE}/api/quote/${chunk.join(',')}`;
         const res = await fetch(url);
         if (!res.ok) {
           const body = await res.text();
@@ -108,7 +116,7 @@ function authHeaders() {
 }
 
 export async function register(username, password, nickname) {
-  const res = await fetch('/api/auth/register', {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, nickname }),
@@ -121,7 +129,7 @@ export async function register(username, password, nickname) {
 }
 
 export async function login(username, password) {
-  const res = await fetch('/api/auth/login', {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -137,14 +145,14 @@ export async function login(username, password) {
 }
 
 export async function getMe() {
-  const res = await fetch('/api/auth/me', { headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/api/auth/me`, { headers: authHeaders() });
   if (!res.ok) throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
   return res.json();
 }
 
 export async function logout() {
   try {
-    await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', headers: authHeaders() });
   } finally {
     clearStoredAuth();
   }
@@ -171,19 +179,19 @@ export function clearStoredAuth() {
 // ==================== BOARD API ====================
 
 export async function fetchPosts(page = 1, limit = 20) {
-  const res = await fetch(`/api/posts?page=${page}&limit=${limit}`);
+  const res = await fetch(`${API_BASE}/api/posts?page=${page}&limit=${limit}`);
   if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
   return res.json();
 }
 
 export async function fetchPost(id) {
-  const res = await fetch(`/api/posts/${id}`);
+  const res = await fetch(`${API_BASE}/api/posts/${id}`);
   if (!res.ok) throw new Error('게시글을 불러오지 못했습니다.');
   return res.json();
 }
 
 export async function createPost(title, content) {
-  const res = await fetch('/api/posts', {
+  const res = await fetch(`${API_BASE}/api/posts`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ title, content }),
@@ -196,7 +204,7 @@ export async function createPost(title, content) {
 }
 
 export async function updatePost(id, title, content) {
-  const res = await fetch(`/api/posts/${id}`, {
+  const res = await fetch(`${API_BASE}/api/posts/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ title, content }),
@@ -209,7 +217,7 @@ export async function updatePost(id, title, content) {
 }
 
 export async function deletePost(id) {
-  const res = await fetch(`/api/posts/${id}`, { method: 'DELETE', headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/api/posts/${id}`, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || '게시글 삭제 실패');
@@ -218,7 +226,7 @@ export async function deletePost(id) {
 }
 
 export async function addComment(postId, content) {
-  const res = await fetch(`/api/posts/${postId}/comments`, {
+  const res = await fetch(`${API_BASE}/api/posts/${postId}/comments`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ content }),
