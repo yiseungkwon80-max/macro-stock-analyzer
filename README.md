@@ -1,16 +1,52 @@
-# React + Vite
+# Macro Stock Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+거시경제 기반 한국 주식 테마 분석 대시보드 (네이버 증권 API)
 
-Currently, two official plugins are available:
+## 실행 방법
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# 개발 모드 (프론트: Vite, 백엔드: Express)
+npm run dev
 
-## React Compiler
+# 프로덕션 빌드
+npm run build
+npm start
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 배포 (Render.com 무료 티어)
 
-## Expanding the ESLint configuration
+### 1. GitHub에 푸시
+```bash
+git remote add origin https://github.com/<username>/macro-stock-analyzer.git
+git push -u origin master
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Render.com 배포
+1. https://render.com 가입 (GitHub 계정 연동)
+2. New Web Service → GitHub 저장소 선택
+3. 설정:
+   - Name: `macro-stock-analyzer`
+   - Runtime: Node
+   - Build Command: `npm install && npm run build`
+   - Start Command: `npm start`
+   - Free Instance Type 선택
+
+### 3. 도메인
+- 자동 생성: `https://macro-stock-analyzer.onrender.com`
+
+## 관리자 계정
+- ID: `ysk`
+- PW: `admin`
+(최초 서버 실행 시 자동 생성)
+
+## API 엔드포인트
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/api/health` | 헬스체크 |
+| GET | `/api/quote/:codes` | 주식 시세 (네이버) |
+| POST | `/api/auth/register` | 회원가입 |
+| POST | `/api/auth/login` | 로그인 |
+| GET | `/api/auth/me` | 내 정보 |
+| GET/POST | `/api/posts` | 게시글 목록/작성 |
+| GET/PUT/DELETE | `/api/posts/:id` | 게시글 상세/수정/삭제 |
+| POST | `/api/posts/:id/comments` | 댓글 작성 |
