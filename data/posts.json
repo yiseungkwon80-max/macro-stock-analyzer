@@ -1,0 +1,19 @@
+[
+  {
+    "id": "f6083d56-aae7-49f4-afc1-96afe1c0c9d3",
+    "userId": "83cbc4e4-6d54-4523-b5df-4bd801b714ed",
+    "title": "????? ???",
+    "content": "??? API ?? ???? ??????. ?? ??? ?? ????? ?????.",
+    "createdAt": 1779098119487,
+    "updatedAt": 1779098119487,
+    "viewCount": 1,
+    "comments": [
+      {
+        "id": "5a904540-4f81-47ac-a72f-4509d4dea13c",
+        "userId": "83cbc4e4-6d54-4523-b5df-4bd801b714ed",
+        "content": "API ?? ??? ?????!",
+        "createdAt": 1779098168051
+      }
+    ]
+  }
+]

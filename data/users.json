@@ -1,0 +1,18 @@
+[
+  {
+    "id": "83cbc4e4-6d54-4523-b5df-4bd801b714ed",
+    "username": "testuser99",
+    "nickname": "???",
+    "salt": "fa775f8e251eecf2c60b90ec5136e097",
+    "hash": "d2ff6554387c5a8a325e6e2b6d43dea01da5e46e62aeebde54fb9fb71023d133d6dbeae9874d08e5e9834ba532b2944d692089a149c1bc74fed7d7fe5451f262",
+    "createdAt": 1779098057588
+  },
+  {
+    "id": "bdb1c8b3-e001-414d-b090-f6ca76616501",
+    "username": "ysk",
+    "nickname": "관리자",
+    "salt": "273c30ee0ee7d3f0f6f8064ff27c8ca2",
+    "hash": "a6a2a3f3ab8082165fbae8d5f8df65fd827daffcaa38af176bfe377de0af854db59404bea6c7a94c00d3f416f3dff8360493848c16ec300df09235d429fe97c9",
+    "createdAt": 1779154256807
+  }
+]
