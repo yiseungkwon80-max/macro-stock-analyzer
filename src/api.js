@@ -70,6 +70,44 @@ const KOSPI_STOCKS = {
 };
 
 /**
+ * 종목명 → 종목코드 역방향 조회
+ * - 6자리 숫자 → 그대로 반환 (알려진 종목이면 name 포함)
+ * - 종목명 → KOSPI_STOCKS에서 대소문자 구분 없이 검색
+ * @param {string} input - 종목코드(6자리 숫자) 또는 종목명
+ * @returns {{ code: string, name: string } | null}
+ */
+export function lookupCode(input) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // 1) 이미 6자리 숫자 코드인 경우
+  if (/^\d{6}$/.test(trimmed)) {
+    const info = KOSPI_STOCKS[trimmed];
+    return info ? { code: trimmed, name: info.name } : { code: trimmed, name: trimmed };
+  }
+
+  // 2) 종목명 검색 (대소문자 구분 없이)
+  const query = trimmed.toLowerCase();
+
+  // 정확히 일치하는 종목명 우선
+  for (const [code, info] of Object.entries(KOSPI_STOCKS)) {
+    if (info.name.toLowerCase() === query) {
+      return { code, name: info.name };
+    }
+  }
+
+  // 부분 일치 (포함)
+  for (const [code, info] of Object.entries(KOSPI_STOCKS)) {
+    if (info.name.toLowerCase().includes(query)) {
+      return { code, name: info.name };
+    }
+  }
+
+  // 3) 검색 결과 없음
+  return null;
+}
+
+/**
  * 종목 시세 조회 (자동 chunk 분할)
  */
 export async function getQuotes(codes) {

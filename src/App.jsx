@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
-import { getQuotes, getStockInfo, KOSPI_STOCKS, TOKEN_KEY, USER_KEY,
+import { getQuotes, getStockInfo, lookupCode, KOSPI_STOCKS, TOKEN_KEY, USER_KEY,
   register, login, logout, getMe, getStoredAuth, clearStoredAuth,
   fetchPosts, fetchPost, createPost, updatePost, deletePost, addComment } from './api.js';
 
@@ -934,18 +934,26 @@ function AnalysisView({ quotes, loading, error, lastUpdated, searchCode, setSear
   const info = getStockInfo(searchCode);
   const q = quotes[searchCode];
 
+  const handleSearch = (input) => {
+    const result = lookupCode(input);
+    if (result) {
+      setSearchCode(result.code);
+      setSearchInput(result.code);
+    }
+  };
+
   return (
     <>
       <div className="analysis-search-bar">
         <input
           type="text"
-          placeholder="종목코드 입력 (예: 005930)"
+          placeholder="종목코드 또는 종목명 입력 (예: 삼성전자, 005930)"
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') setSearchCode(searchInput); }}
+          onKeyDown={e => { if (e.key === 'Enter') handleSearch(searchInput); }}
           className="analysis-search-input"
         />
-        <button className="analysis-search-btn" onClick={() => setSearchCode(searchInput)} disabled={loading}>
+        <button className="analysis-search-btn" onClick={() => handleSearch(searchInput)} disabled={loading}>
           {loading ? '검색 중...' : '🔍 조회'}
         </button>
         <div className="analysis-quick-btns">
