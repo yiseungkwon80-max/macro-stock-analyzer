@@ -146,40 +146,6 @@ const SECTOR_THEME = {
   },
 };
 
-// 핵심 테마 — 이벤트와 무관하게 항상 표시
-function buildCoreThemes() {
-  return [
-    {
-      theme: 'AI·반도체 슈퍼사이클',
-      icon: '🤖',
-      description: '글로벌 AI 투자 확대로 반도체 수요 폭발. HBM, AI 가속기 관련주 집중 조명',
-      strength: 'STRONG',
-      source: 'core',
-      codes: ['000660', '005930', '042700', '058470'],
-      reasons: {
-        '000660': 'HBM3E 독점 공급. 엔비디아向 매출 급증',
-        '005930': '파운드리 수주 확대. HBM 양산 본격화',
-        '042700': 'HBM 패키징 장비 독점. 수주 잔고 사상 최대',
-        '058470': 'AI 반도체 테스트 소켓 글로벌 1위',
-      },
-    },
-    {
-      theme: '2차전지·전기차 밸류체인',
-      icon: '🔋',
-      description: '美 IRA 수혜 + 유럽 배터리 규제 강화. K-배터리 3사의 글로벌 점유율 50% 돌파',
-      strength: 'STRONG',
-      source: 'core',
-      codes: ['373220', '005490', '247540', '096770'],
-      reasons: {
-        '373220': '글로벌 배터리 점유율 2위. 美 GM 합작공장 양산 본격화',
-        '005490': '리튬·니켈 등 2차전지 소재 수직계열화',
-        '247540': '하이니켈 양극재 글로벌 1위. 헝가리·캐나다 증설',
-        '096770': 'SK온 배터리 + LiBS 글로벌 1위. 소재 부문 IPO 기대감',
-      },
-    },
-  ];
-}
-
 /**
  * beneficiary_stocks 를 섹터별로 그룹화
  */
@@ -295,9 +261,6 @@ function buildDynamicThemes(macroAnalysis) {
       reasons: reasonMap,
     });
   }
-
-  // 3. 핵심 테마 추가
-  themes.push(...buildCoreThemes());
 
   return themes;
 }

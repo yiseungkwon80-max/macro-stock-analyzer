@@ -294,6 +294,20 @@ export async function fetchThemes(forceRefresh = false) {
   return res.json();
 }
 
+// ==================== VALUE RECOMMENDATIONS API ====================
+
+export async function fetchValueGroups(forceRefresh = false) {
+  const url = forceRefresh
+    ? `${API_BASE}/api/value?force=true`
+    : `${API_BASE}/api/value`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || err.detail || '저평가주 데이터를 불러오지 못했습니다.');
+  }
+  return res.json();
+}
+
 // ==================== MACRO ANALYSIS API ====================
 
 export async function fetchMacroAnalysis(forceRefresh = false) {

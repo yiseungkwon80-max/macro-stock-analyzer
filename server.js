@@ -21,6 +21,7 @@ import {
 } from './db.js';
 import { getMacroAnalysis } from './macro-news.js';
 import { getThemeRecommendations } from './theme-recommender.js';
+import { getValueRecommendations } from './value-recommender.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -341,6 +342,19 @@ app.get('/api/themes', async (req, res) => {
   }
 });
 
+// ============== 저평가주 발굴 API ==============
+
+app.get('/api/value', async (req, res) => {
+  try {
+    const forceRefresh = req.query.force === 'true';
+    const recommendations = await getValueRecommendations(forceRefresh);
+    res.json(recommendations);
+  } catch (err) {
+    console.error('[Value] 발굴 오류:', err.message);
+    res.status(500).json({ error: '저평가주 발굴 중 오류가 발생했습니다.', detail: err.message });
+  }
+});
+
 // ============== 정적 파일 서빙 (운영) ==============
 
 // dist/ 정적 파일 서빙 (항상 활성화)
@@ -371,8 +385,7 @@ async function startServer() {
     console.log(`📝 게시판 API: /api/posts/*`);
     console.log(`📊 매크로 분석: /api/macro`);
     console.log(`🔥 테마 추천: /api/themes`);
-    console.log(`🔥 테마 추천: /api/themes`);
-    console.log(`🔥 테마 추천: /api/themes`);
+    console.log(`💎 저평가주 발굴: /api/value`);
     console.log(`🔧 모드: ${isProd ? '운영' : '개발'}`);
     console.log('='.repeat(50));
   });

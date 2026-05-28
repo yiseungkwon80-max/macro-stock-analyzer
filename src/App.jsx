@@ -3,7 +3,7 @@ import './App.css';
 import { getQuotes, getStockInfo, lookupCode, KOSPI_STOCKS, TOKEN_KEY, USER_KEY,
   register, login, logout, getMe, getStoredAuth, clearStoredAuth,
   fetchPosts, fetchPost, createPost, updatePost, deletePost, addComment,
-  fetchMacroAnalysis, fetchThemes } from './api.js';
+  fetchMacroAnalysis, fetchThemes, fetchValueGroups } from './api.js';
 
 // ==================== MACRO ANALYSIS (동적 API 기반) ====================
 
@@ -123,71 +123,11 @@ const THEME_CONFIG = [
   },
 ];
 
-// API 실패 시 사용할 폴백 (THEME_CONFIG와 동일)
-const THEME_FALLBACK = THEME_CONFIG;
+// API 실패 시 사용할 폴백 (더 이상 하드코딩 없음 = 빈 배열)
+const THEME_FALLBACK = [];
 
-const VALUE_GROUPS = [
-  {
-    group: '금융·은행 저평가주',
-    icon: '🏦',
-    description: 'PBR 0.2~0.5x 극단적 저평가 + 고배당',
-    stocks: [
-      { code: '024110', strengths: ['절대 저평가 (PBR 0.32)', '배당수익률 6.8%', '중소기업 대출 시장 지배력', '정부 정책 수혜'], grade: 'A' },
-      { code: '139130', strengths: ['PBR 0.25 국내 은행주 최저', 'iM뱅크 전환 성장성', '대구·경북 기반 안정적', '자사주 매입 검토'], grade: 'A' },
-      { code: '316140', strengths: ['PBR 0.35 저평가', '완전민영화 프리미엄', '배당수익률 5.2%', '비은행 부문 확장'], grade: 'A' },
-      { code: '086790', strengths: ['PBR 0.38 저평가', '자사주 매입·소각 적극', 'IB 부문 강화', 'ROE 개선 추세'], grade: 'B+' },
-      { code: '016360', strengths: ['ROE 10%대 견조', 'PBR 0.55 저평가', '배당성향 40%', 'IB 수익 다각화'], grade: 'B' },
-    ],
-  },
-  {
-    group: '지주·건설 할인주',
-    icon: '🏗️',
-    description: 'NAV 대비 60~70% 할인 + 자회사 가치 미반영',
-    stocks: [
-      { code: '004990', strengths: ['PBR 0.29 지주사 할인 극심', '자회사 실적 턴어라운드', '배당수익률 5%대', '자사주 8% 보유'], grade: 'B+' },
-      { code: '006360', strengths: ['PBR 0.38 업종 평균 하회', '플랜트 수주 회복', '주택 분양 개선', '자회사 GS이니마 IPO'], grade: 'B+' },
-      { code: '034730', strengths: ['NAV 대비 65% 할인', 'SK하이닉스 지분가치 급증', '배당수익률 4.8%', '자사주 소각 정책'], grade: 'A' },
-      { code: '402340', strengths: ['NAV 대비 70% 할인', 'SK하이닉스 간접 보유', '자회사 IPO 모멘텀', '자사주 30% 확보'], grade: 'B+' },
-      { code: '000720', strengths: ['PBR 0.32 역대 최저', '중동 수주 확대 기대', '정비사업·재건축 수혜', '배당수익률 4.5%'], grade: 'B' },
-    ],
-  },
-  {
-    group: '통신·유틸리티 고배당',
-    icon: '📡',
-    description: '배당수익률 5~7% + 방어적 비즈니스',
-    stocks: [
-      { code: '030200', strengths: ['배당수익률 6.5%', '통신 본업 안정적', 'IDC·클라우드 성장', '자사주 매입 지속'], grade: 'A' },
-      { code: '017670', strengths: ['배당수익률 6.1%', 'AI 인프라 수혜', '자회사 IPO 기대', '5G 가입자 확대'], grade: 'A' },
-      { code: '032830', strengths: ['배당수익률 5.8%', 'PBR 0.45 저평가', '삼성전자 지분가치', '안정적 보험 포트폴리오'], grade: 'B+' },
-      { code: '000810', strengths: ['배당수익률 5.2%', 'IFRS17 도입 수혜', 'PBR 0.42 저평가', '자동차보험 손해율 개선'], grade: 'B+' },
-      { code: '010950', strengths: ['배당수익률 7.1%', '정유·윤활유 캐시카우', 'PBR 0.48 저평가', '수소·배터리 신사업'], grade: 'B' },
-    ],
-  },
-  {
-    group: '화학·에너지 실적주',
-    icon: '⚗️',
-    description: '실적 바닥 통과 + 업황 턴어라운드 기대',
-    stocks: [
-      { code: '051910', strengths: ['PBR 0.65 하단', '배터리 소재 성장', '석유화학 바닥 통과', 'R&D CAPA 확대'], grade: 'B+' },
-      { code: '011170', strengths: ['PBR 0.28 역대 최저', '화학 스프레드 개선', '배당수익률 4.8%', 'M&A 가능성'], grade: 'B' },
-      { code: '096770', strengths: ['LiBS 글로벌 1위', 'SK온 실적 턴어라운드', 'PBR 0.45 저평가', 'IRA 수혜 직결'], grade: 'B+' },
-      { code: '047050', strengths: ['PBR 0.55 저평가', '곡물·에너지 트레이딩', '미얀마 가스전', '2차전지 소재 사업'], grade: 'B' },
-      { code: '005490', strengths: ['PBR 0.60 저평가', '2차전지 소재 수직계열화', '아르헨티나 리튬 상업생산', '철강 본업 안정적'], grade: 'B+' },
-    ],
-  },
-  {
-    group: 'IT·광고 저평가 가치주',
-    icon: '💻',
-    description: '현금흐름 우수 + 숨겨진 자산가치',
-    stocks: [
-      { code: '030000', strengths: ['PER 8배 저평가', '삼성전자 광고 물량 확대', '배당수익률 5.5%', '현금성자산 2조원'], grade: 'A' },
-      { code: '035420', strengths: ['PER 18배 (역사적 저점)', '커머스 턴어라운드', 'AI 검색 모멘텀', '자사주 소각 1조원'], grade: 'B+' },
-      { code: '018260', strengths: ['PER 9배 저평가', '삼성 클라우드 수혜', '물류·AI SaaS 전환', '현금성자산 4.5조원'], grade: 'B+' },
-      { code: '009150', strengths: ['PER 12배 저평가', 'MLCC 업황 회복', '전장용 부품 성장', '배당수익률 3.5%'], grade: 'B' },
-      { code: '012450', strengths: ['PER 14배 (방산 평균 하회)', '수출 모멘텀 지속', 'PBR 1.8 적정 평가', '실적 가시성 높음'], grade: 'B' },
-    ],
-  },
-];
+// VALUE_GROUPS는 이제 서버의 /api/value 엔드포인트에서 동적으로 생성됩니다.
+// (value-recommender.js → sector_map 기반 저평가주 자동 발굴, IT·광고 제외됨)
 
 const REBALANCE_DATA = {
   context: {
@@ -719,60 +659,148 @@ function ThemeView() {
 }
 
 // ==================== VALUE VIEW ====================
-// ==================== VALUE VIEW (grouped, selectable) ====================
+// ==================== VALUE VIEW (grouped, selectable, API 동적 연동) ====================
 function ValueView() {
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  // ── API 상태
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsError, setGroupsError] = useState(null);
+  const [groupsMeta, setGroupsMeta] = useState(null);
+  const [fetchId, setFetchId] = useState(0);
+
+  // ── 선택/시세 상태
+  const [selectedIdx, setSelectedIdx] = useState(null);
   const [quotes, setQuotes] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [quotesError, setQuotesError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [refetchCounter, setRefetchCounter] = useState(0);
 
-  const group = selectedGroup !== null ? VALUE_GROUPS[selectedGroup] : null;
-  const codes = group ? group.stocks.map((s) => s.code) : [];
+  // ── 저평가 그룹 API 호출
+  useEffect(() => {
+    let cancelled = false;
+    setGroupsLoading(true);
+    setGroupsError(null);
+    fetchValueGroups(fetchId > 0)
+      .then(data => {
+        if (cancelled) return;
+        setGroups(data.groups || []);
+        setGroupsMeta({
+          macro_event: data.macro_event,
+          event_date: data.event_date,
+          generated_at: data.generated_at,
+          cached: data.cached,
+        });
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setGroupsError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setGroupsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [fetchId]);
 
+  // ── 선택 그룹 변경 시 이전 선택 초기화
+  useEffect(() => { setSelectedIdx(null); }, [fetchId]);
+
+  const group = selectedIdx !== null ? groups[selectedIdx] : null;
+  const codes = group ? group.stocks.map(s => s.code) : [];
+
+  // ── 종목 시세 조회
   useEffect(() => {
     let cancelled = false;
     if (codes.length === 0) return;
-    setLoading(true);
-    setError(null);
+    setQuotesLoading(true);
+    setQuotesError(null);
     getQuotes(codes)
-      .then((data) => {
+      .then(data => {
         if (cancelled) return;
         const map = {};
-        data.forEach((q) => { map[q.code] = q; });
+        data.forEach(q => { map[q.code] = q; });
         setQuotes(map);
         setLastUpdated(new Date());
       })
-      .catch((e) => {
+      .catch(e => {
         if (cancelled) return;
-        setError(e.message);
+        setQuotesError(e.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setQuotesLoading(false);
       });
     return () => { cancelled = true; };
-  }, [selectedGroup, refetchCounter]);
+  }, [selectedIdx, fetchId]);
+
+  if (groupsLoading && groups.length === 0) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <>
+      {/* 저평가 메타 정보 */}
+      <div className="macro-toolbar">
+        <div className="macro-status">
+          {groupsMeta?.macro_event && (
+            <span className="macro-status-source">📡 {groupsMeta.macro_event}</span>
+          )}
+          {groupsMeta?.generated_at && (
+            <span className="macro-status-session">🕐 {groupsMeta.cached ? '캐시' : '실시간 생성'}</span>
+          )}
+          {groupsMeta?.generated_at && (
+            <span className="macro-status-updated">
+              갱신: {new Date(groupsMeta.generated_at).toLocaleString('ko-KR', { hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' })}
+            </span>
+          )}
+        </div>
+        <button
+          className="refetch-btn macro-refresh-btn"
+          onClick={() => setFetchId(c => c + 1)}
+          disabled={groupsLoading}
+        >
+          {groupsLoading ? '⏳ 재발굴 중...' : '🔄 저평가주 재발굴'}
+        </button>
+      </div>
+
+      {groupsError && <ErrorBanner msg={'⚠️ 저평가 그룹 로딩 실패: ' + groupsError} />}
+
+      {groups.length === 0 && !groupsLoading && !groupsError && (
+        <div className="theme-placeholder">
+          <span className="placeholder-icon">💎</span>
+          <p>현재 감지된 매크로 이벤트에 연결된 저평가 그룹이 없습니다</p>
+          <p className="placeholder-hint">새로운 매크로 뉴스가 감지되면 자동으로 생성됩니다</p>
+        </div>
+      )}
+
+      {/* 그룹 선택 카드 그리드 */}
       <div className="selector-label-row">
         <span className="selector-label-icon">💎</span>
-        <span className="selector-label-text">저평가 그룹을 선택하세요</span>
-        <span className="selector-label-count">{VALUE_GROUPS.length}개 그룹</span>
+        <span className="selector-label-text">매크로 기반 저평가 그룹</span>
+        <span className="selector-label-count">{groups.length}개 그룹</span>
       </div>
       <div className="value-card-grid">
-        {VALUE_GROUPS.map((g, i) => {
-          const isActive = selectedGroup === i;
+        {groups.map((g, i) => {
+          const isActive = selectedIdx === i;
+          const strengthLabel = g.strength === 'STRONG' ? '강력 추천'
+            : g.strength === 'CONTRARIAN' ? '역발상'
+            : '관심';
+          const sourceTag = g.source === 'core' ? '핵심' : g.source === 'macro' ? '매크로' : '';
           return (
             <button
               key={i}
               className={`value-card ${isActive ? 'active' : ''}`}
-              onClick={() => setSelectedGroup(isActive ? null : i)}
+              onClick={() => setSelectedIdx(isActive ? null : i)}
             >
               <div className="value-card-icon">{g.icon}</div>
               <div className="value-card-body">
-                <span className="value-card-name">{g.group}</span>
+                <div className="value-card-header-row">
+                  <span className="value-card-name">{g.group}</span>
+                  <div className="value-card-badges">
+                    {sourceTag && <span className={`theme-source-badge ${g.source}`}>{sourceTag}</span>}
+                    <span className={`theme-strength-badge ${g.strength === 'STRONG' ? 'strong' : 'medium'}`}>
+                      {strengthLabel}
+                    </span>
+                  </div>
+                </div>
                 <p className="value-card-desc">{g.description}</p>
                 <div className="value-card-meta">
                   <span className="value-card-stock-count">
@@ -786,15 +814,15 @@ function ValueView() {
         })}
       </div>
 
-      {selectedGroup === null && (
+      {selectedIdx === null && (
         <div className="theme-placeholder">
           <span className="placeholder-icon">👆</span>
           <p>위에서 분석하고 싶은 저평가 그룹을 선택해주세요</p>
-          <p className="placeholder-hint">선택한 그룹의 실시간 시세와 투자 포인트가 표시됩니다</p>
+          <p className="placeholder-hint">매크로 이벤트에 따라 저평가 그룹이 매일 새롭게 구성됩니다</p>
         </div>
       )}
 
-      {selectedGroup !== null && (
+      {selectedIdx !== null && group && (
         <div className="value-table-wrap">
           <div className="value-group-title">
             <span>{group.icon}</span>
@@ -804,15 +832,15 @@ function ValueView() {
           <div className="value-refetch-row">
             <button
               className="refetch-btn"
-              onClick={() => setRefetchCounter(c => c + 1)}
-              disabled={loading}
+              onClick={() => setFetchId(c => c + 1)}
+              disabled={quotesLoading}
             >
-              {loading ? '⏳ 재발굴 중...' : '🔄 실시간 재발굴'}
+              {quotesLoading ? '⏳ 재발굴 중...' : '🔄 실시간 재발굴'}
             </button>
             <LastUpdated time={lastUpdated} />
           </div>
-          {loading && <LoadingSpinner />}
-          {error && <ErrorBanner msg={error} />}
+          {quotesLoading && <LoadingSpinner />}
+          {quotesError && <ErrorBanner msg={quotesError} />}
           <table className="value-table">
             <thead>
               <tr>
@@ -839,12 +867,12 @@ function ValueView() {
                       </div>
                     </td>
                     <td className="value-price">{q ? fmtWon(q.price) : '...'}</td>
-                    <td className="value-num">{q?.per ? q.per.toFixed(1) : 'N/A'}</td>
-                    <td className="value-num highlight">{q?.pbr ? q.pbr.toFixed(2) : 'N/A'}</td>
-                    <td className="value-num">{q?.divYield ? q.divYield.toFixed(1) + '%' : 'N/A'}</td>
+                    <td className="value-num">{q?.per ? q.per.toFixed(1) : st.per || 'N/A'}</td>
+                    <td className="value-num highlight">{q?.pbr ? q.pbr.toFixed(2) : st.pbr || 'N/A'}</td>
+                    <td className="value-num">{q?.divYield ? q.divYield.toFixed(1) + '%' : st.divYield ? st.divYield + '%' : 'N/A'}</td>
                     <td className="value-num">{q?.high52 ? fmtWon(q.high52) : 'N/A'}</td>
                     <td className="value-num">{q?.low52 ? fmtWon(q.low52) : 'N/A'}</td>
-                    <td><span className={`value-grade grade-${st.grade.replace('+','').toLowerCase()}`}>{st.grade}</span></td>
+                    <td><span className={`value-grade grade-${(st.grade || 'b').replace('+','').toLowerCase()}`}>{st.grade || 'N/A'}</span></td>
                   </tr>
                 );
               })}
@@ -854,10 +882,10 @@ function ValueView() {
             <div key={i} className="value-detail-card">
               <div className="value-detail-header">
                 <span className="value-detail-name">{getStockInfo(st.code).name}</span>
-                <span className={`value-grade grade-${st.grade.replace('+','').toLowerCase()}`}>{st.grade}</span>
+                <span className={`value-grade grade-${(st.grade || 'b').replace('+','').toLowerCase()}`}>{st.grade || 'N/A'}</span>
               </div>
               <div className="value-strengths">
-                {st.strengths.map((s, j) => (
+                {(st.strengths || []).map((s, j) => (
                   <span key={j} className="value-strength-tag">{s}</span>
                 ))}
               </div>
