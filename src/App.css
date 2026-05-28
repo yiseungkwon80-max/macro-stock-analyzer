@@ -148,6 +148,16 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Ne
 .placeholder-icon{font-size:48px;display:block;margin-bottom:16px}
 .theme-placeholder p{font-size:15px;color:#666;font-weight:600}
 .placeholder-hint{font-size:12px!important;color:#aaa!important;margin-top:4px;font-weight:400!important}
+/* ---- Theme source / badge tags ---- */
+.theme-card-badges{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.theme-source-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:0.3px}
+.theme-source-badge.core{background:#d4e4ff;color:#1a4a7a}
+.theme-source-badge.macro{background:#fff3e0;color:#e67e22}
+.theme-event-date{font-size:12px;color:#888;font-weight:500;margin-bottom:12px;padding-top:4px}
+.theme-source-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.3px}
+.theme-source-tag.core{background:#d4e4ff;color:#1a4a7a}
+.theme-source-tag.macro{background:#fff3e0;color:#e67e22}
+/* ---- Theme detail section ---- */
 .theme-section{background:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #e4eaf5}
 .theme-header{margin-bottom:20px}
 .theme-title-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
@@ -336,6 +346,15 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Ne
 
 /* ========== Error Banner ========== */
 .error-banner{background:#fff8f8;border:1px solid #f5c6c6;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#c0392b;font-weight:600}
+
+/* ========== Macro Toolbar ========== */
+.macro-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.macro-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0}
+.macro-status-error{font-size:12px;color:#c0392b;font-weight:600;background:#fdecea;padding:4px 10px;border-radius:8px}
+.macro-status-source,.macro-status-session,.macro-status-updated{font-size:11px;color:#888;font-weight:500;background:#f0f2f5;padding:4px 10px;border-radius:8px;white-space:nowrap}
+.macro-refresh-btn{padding:8px 18px;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.macro-refresh-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(192,57,43,0.4)}
+.macro-refresh-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 
 /* ========== Refetch Button ========== */
 .refetch-btn{padding:8px 18px;background:linear-gradient(135deg,#1a4a7a,#22763a);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;align-self:flex-start}

@@ -19,6 +19,8 @@ import {
   getPosts, getPostById, createPost, updatePost, deletePostById,
   incrementViewCount, addCommentToPost,
 } from './db.js';
+import { getMacroAnalysis } from './macro-news.js';
+import { getThemeRecommendations } from './theme-recommender.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -313,17 +315,41 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// ============== 매크로 분석 API ==============
+
+app.get('/api/macro', async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === '1';
+    const analysis = await getMacroAnalysis(forceRefresh);
+    res.json(analysis);
+  } catch (err) {
+    console.error('[Macro] 분석 오류:', err.message);
+    res.status(500).json({ error: '매크로 분석 중 오류가 발생했습니다.', detail: err.message });
+  }
+});
+
+// ============== 테마 추천 API ==============
+
+app.get('/api/themes', async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === '1';
+    const recommendations = await getThemeRecommendations(forceRefresh);
+    res.json(recommendations);
+  } catch (err) {
+    console.error('[Themes] 추천 오류:', err.message);
+    res.status(500).json({ error: '테마 추천 생성 중 오류가 발생했습니다.', detail: err.message });
+  }
+});
+
 // ============== 정적 파일 서빙 (운영) ==============
 
-// 운영 환경: dist/ 정적 파일 서빙 (Render 단일 서비스)
-if (isProd) {
-  const distPath = path.join(__dirname, 'dist');
-  app.use(express.static(distPath));
-  app.get(/^(?!\/api\/).*/, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-  console.log('[Prod] 정적 파일 서빙 활성화 (dist/)');
-}
+// dist/ 정적 파일 서빙 (항상 활성화)
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+app.get(/^(?!\/api\/).*/, (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+console.log('[Server] 정적 파일 서빙 활성화 (dist/)');
 
 // ============== 서버 시작 ==============
 
@@ -331,21 +357,25 @@ async function startServer() {
   try {
     await connectDB();
     await seedAdmin();
-
-    app.listen(PORT, () => {
-      console.log('='.repeat(50));
-      console.log(`🚀 Macro Stock Analyzer 서버 실행 중 (포트 ${PORT})`);
-      console.log(`📡 데이터 소스: 네이버 증권 API (무인증)`);
-      console.log(`🗄️  데이터베이스: MongoDB`);
-      console.log(`👤 인증 API: /api/auth/*`);
-      console.log(`📝 게시판 API: /api/posts/*`);
-      console.log(`🔧 모드: ${isProd ? '운영' : '개발'}`);
-      console.log('='.repeat(50));
-    });
+    console.log(`🗄️  데이터베이스: MongoDB 연결됨`);
   } catch (err) {
-    console.error('[Server] 시작 실패:', err.message);
-    process.exit(1);
+    console.warn('[Server] MongoDB 연결 실패 (인증/게시판 비활성화):', err.message);
+    console.warn('[Server] 매크로 분석 + 주식 API는 정상 작동합니다.');
   }
+
+  app.listen(PORT, () => {
+    console.log('='.repeat(50));
+    console.log(`🚀 Macro Stock Analyzer 서버 실행 중 (포트 ${PORT})`);
+    console.log(`📡 데이터 소스: 네이버 증권 API (무인증)`);
+    console.log(`👤 인증 API: /api/auth/*`);
+    console.log(`📝 게시판 API: /api/posts/*`);
+    console.log(`📊 매크로 분석: /api/macro`);
+    console.log(`🔥 테마 추천: /api/themes`);
+    console.log(`🔥 테마 추천: /api/themes`);
+    console.log(`🔥 테마 추천: /api/themes`);
+    console.log(`🔧 모드: ${isProd ? '운영' : '개발'}`);
+    console.log('='.repeat(50));
+  });
 }
 
 // Graceful shutdown

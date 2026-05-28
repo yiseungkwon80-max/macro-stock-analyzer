@@ -172,6 +172,21 @@ async function fetchStock(code) {
 }
 
 /**
+ * USD/KRW 실시간 환율 조회 (Dunamu 외환 API)
+ * @returns {number|null} 현재 USD/KRW 환율
+ */
+export async function getUSDKRW() {
+  try {
+    const res = await fetch('https://quotation-api-cdn.dunamu.com/v1/forex/recent?codes=FRX.KRWUSD');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.[0]?.basePrice || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 여러 종목 동시 조회 (병렬)
  * @param {string[]} codes - 종목코드 배열
  * @returns {object[]} 각 종목 현재가 배열

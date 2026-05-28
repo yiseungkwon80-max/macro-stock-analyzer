@@ -2,51 +2,24 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { getQuotes, getStockInfo, lookupCode, KOSPI_STOCKS, TOKEN_KEY, USER_KEY,
   register, login, logout, getMe, getStoredAuth, clearStoredAuth,
-  fetchPosts, fetchPost, createPost, updatePost, deletePost, addComment } from './api.js';
+  fetchPosts, fetchPost, createPost, updatePost, deletePost, addComment,
+  fetchMacroAnalysis, fetchThemes } from './api.js';
 
-// ==================== SAMPLE DATA (매크로/정성적 분석 - API 아닌 부분만 유지) ====================
+// ==================== MACRO ANALYSIS (동적 API 기반) ====================
 
-const MACRO_DATA = {
-  summary: '연준(Fed)이 예상보다 매파적인 입장을 보이며 기준금리 동결을 발표했습니다. 시장에서는 연내 2회 금리 인하 기대가 1회로 축소되었고, 달러 지수는 105선을 돌파했습니다.',
-  macro_event: 'Fed FOMC 5월 금리 동결 (5.25~5.50%)',
-  event_date: '2026-05-13',
-  event_type: 'rate_decision',
-  impact_rating: 'HIGH',
-  key_data: {
-    rate_decision: '동결 (5.25~5.50%)',
-    dot_plot: '연내 1회 인하 시사 (기존 2회 → 1회)',
-    inflation_outlook: 'PCE 2.6% (상향 조정)',
-    gdp_outlook: 'GDP 2.1% (하향 조정)',
-    unemployment: '실업률 4.1% 전망',
-  },
-  beneficiary_stocks: [
-    { name: 'KB금융', code: '105560', expected_upside: '+8~12%', action: '매수', benefit_reason: '금리 동결로 예대마진 개선 기대. 고배당 매력 부각' },
-    { name: '신한지주', code: '055550', expected_upside: '+7~10%', action: '매수', benefit_reason: '견조한 대출 성장 + NIM 개선. 자사주 매입 기대' },
-    { name: '삼성화재', code: '000810', expected_upside: '+5~8%', action: '매수', benefit_reason: '금리 상승기 투자수익률 개선. IFRS17 효과 지속' },
-  ],
-  damage_stocks: [
-    { name: 'NAVER', code: '035420', expected_downside: '-6~10%', action: '비중축소', damage_reason: '금리 동결에 따른 성장주 밸류에이션 부담. 달러 강세로 해외 매출 환손실 우려' },
-    { name: '카카오', code: '035720', expected_downside: '-5~9%', action: '비중축소', damage_reason: '고PER 성장주 센티먼트 악화. 광고 경기 회복 지연 우려' },
-    { name: '셀트리온', code: '068270', expected_downside: '-4~7%', action: '관망', damage_reason: '바이오 섹터 금리 민감도 높음. 달러 강세로 수출 채산성 악화 가능성' },
-  ],
-  sector_map: [
-    { sector: '은행', impact: '수혜', reason: '예대마진 개선, NIM 상승' },
-    { sector: '보험', impact: '수혜', reason: '투자수익률 상승, IFRS17 효과' },
-    { sector: '에너지', impact: '수혜', reason: '달러 강세, 원자재 가격 연동' },
-    { sector: '기술/성장주', impact: '피해', reason: '할인율 상승, 밸류에이션 압박' },
-    { sector: '바이오', impact: '피해', reason: '금리 민감도, R&D 비용 부담' },
-    { sector: '건설', impact: '피해', reason: '금융비용 증가, PF 우려' },
-    { sector: '음식료', impact: '중립', reason: '방어주 선호, 원재료비 변동' },
-    { sector: '자동차', impact: '중립', reason: '수출 경쟁력 vs 환율 효과 상쇄' },
-  ],
-  hedge_strategy: '금리 동결 국면에서는 금융주(은행·보험) 비중 확대와 성장주 비중 축소가 유효합니다. 은행 ETF(KODEX 은행)와 배당 ETF(TIGER 배당성장)를 통한 분산 투자를 권장하며, 달러 강세에 대비해 달러선물 ETF 또는 달러예금을 통한 환헤지도 고려하시기 바랍니다.',
-  watch_points: [
-    '6월 FOMC 점도표 변화',
-    '美 CPI/PCE 물가 지표',
-    '원/달러 환율 1,400원 돌파 여부',
-    '외국인 수급 동향',
-    '국내 1분기 GDP 확정치',
-  ],
+// API 실패 시 fallback (하드코딩 최소화)
+const MACRO_FALLBACK = {
+  summary: '현재 시장 데이터를 불러오는 중입니다. 매크로 분석을 위해 서버에서 최신 뉴스를 수집 중입니다...',
+  macro_event: '매크로 분석 로딩 중',
+  event_date: new Date().toISOString().slice(0, 10),
+  event_type: 'loading',
+  impact_rating: 'MEDIUM',
+  key_data: { rate_decision: '로딩 중...', policy_stance: '로딩 중...', inflation_outlook: '로딩 중...', gdp_outlook: '로딩 중...', unemployment: '로딩 중...' },
+  beneficiary_stocks: [],
+  damage_stocks: [],
+  sector_map: [],
+  hedge_strategy: '분석 데이터를 불러오는 중입니다. 잠시만 기다려주세요.',
+  watch_points: [],
 };
 
 const THEME_CONFIG = [
@@ -149,6 +122,9 @@ const THEME_CONFIG = [
     },
   },
 ];
+
+// API 실패 시 사용할 폴백 (THEME_CONFIG와 동일)
+const THEME_FALLBACK = THEME_CONFIG;
 
 const VALUE_GROUPS = [
   {
@@ -283,9 +259,9 @@ const REBALANCE_DATA = {
       trigger: '美 CPI 3.5%↑, 연준 점도표 금리 인상 시사',
     },
     {
-      scenario: '원/달러 환율 1,300원 하회 시',
+      scenario: '원/달러 환율 1,350원 하회 시',
       action: '해외 주식 환헤지형 비중 축소, 환노출형 확대. 달러 약세 국면 수익 극대화',
-      trigger: '원/달러 환율 1,280원 이하 안착',
+      trigger: '원/달러 환율 1,330원 이하 안착',
     },
     {
       scenario: '국내 증시 급락 (-10%↑) 시',
@@ -385,13 +361,38 @@ function LastUpdated({ time }) {
 
 // ==================== MACRO VIEW ====================
 
-function MacroView({ data, quotes }) {
+function MacroView({ data, quotes, loading, error, onRefresh, lastUpdated }) {
+  if (loading && !data?.beneficiary_stocks?.length) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <>
+      {/* Refresh + status bar */}
+      <div className="macro-toolbar">
+        <div className="macro-status">
+          {error && <span className="macro-status-error">⚠️ {error}</span>}
+          {data?.source && <span className="macro-status-source">📡 {data.source}</span>}
+          {data?.session && <span className="macro-status-session">🕐 {data.session} 분석</span>}
+          {lastUpdated && <span className="macro-status-updated">갱신: {lastUpdated.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' })}</span>}
+        </div>
+        <button
+          className="refetch-btn macro-refresh-btn"
+          onClick={onRefresh}
+          disabled={loading}
+        >
+          {loading ? '⏳ 분석 중...' : '🔄 매크로 분석 갱신'}
+        </button>
+      </div>
+
+      {error && data?.summary && <ErrorBanner msg={'⚠️ 최신 데이터 로딩 실패. 캐시된 분석을 표시합니다: ' + error} />}
+
       <div className="event-summary-card">
         <div className="event-header">
           <div className="event-badge">
-            <span className="impact-badge high">⚠️ HIGH IMPACT</span>
+            <span className={`impact-badge ${(data.impact_rating || '').toLowerCase() === 'high' ? 'high' : 'medium'}`}>
+              ⚠️ {data.impact_rating || 'MEDIUM'} IMPACT
+            </span>
             <span className="event-type">{data.event_type === 'rate_decision' ? '🏦 금리 결정' : data.event_type}</span>
           </div>
           <h2 className="event-title">{data.macro_event}</h2>
@@ -496,25 +497,57 @@ function MacroView({ data, quotes }) {
   );
 }
 
-// ==================== THEME VIEW (테마 선택 가능) ====================
+// ==================== THEME VIEW (API 기반 동적 테마) ====================
 function ThemeView() {
-  const [selectedTheme, setSelectedTheme] = useState(null);
-  const [quotes, setQuotes] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [refetchCounter, setRefetchCounter] = useState(0);
+  const [themes, setThemes] = useState([]);
+  const [themesLoading, setThemesLoading] = useState(true);
+  const [themesError, setThemesError] = useState(null);
+  const [themesMeta, setThemesMeta] = useState(null);
+  const [themesFetchId, setThemesFetchId] = useState(0);
 
-  // 선택된 테마의 종목만 가져오기
-  const theme = selectedTheme !== null ? THEME_CONFIG[selectedTheme] : null;
-  const codes = theme ? theme.codes : [];
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [quotes, setQuotes] = useState({});
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [quotesError, setQuotesError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  // ── 서버에서 동적 테마 불러오기 ──
+  useEffect(() => {
+    let cancelled = false;
+    setThemesLoading(true);
+    setThemesError(null);
+    fetchThemes(themesFetchId > 0)
+      .then(data => {
+        if (cancelled) return;
+        setThemes(data.themes || []);
+        setThemesMeta({
+          macro_event: data.macro_event,
+          event_date: data.event_date,
+          generated_at: data.generated_at,
+          source: data.source,
+          cached: data.cached,
+        });
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setThemesError(e.message);
+        setThemes(THEME_FALLBACK);
+      })
+      .finally(() => {
+        if (!cancelled) setThemesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [themesFetchId]);
+
+  // ── 선택된 테마의 종목 시세 조회 ──
+  const selected = selectedIdx !== null ? themes[selectedIdx] : null;
+  const codes = selected ? selected.codes : [];
 
   useEffect(() => {
     let cancelled = false;
     if (codes.length === 0) return;
-
-    setLoading(true);
-    setError(null);
+    setQuotesLoading(true);
+    setQuotesError(null);
     getQuotes(codes)
       .then(data => {
         if (cancelled) return;
@@ -525,39 +558,73 @@ function ThemeView() {
       })
       .catch(e => {
         if (cancelled) return;
-        setError(e.message);
+        setQuotesError(e.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setQuotesLoading(false);
       });
     return () => { cancelled = true; };
-  }, [selectedTheme, refetchCounter]);
+  }, [selectedIdx, themesFetchId]);
+
+  if (themesLoading && themes.length === 0) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <>
+      {/* 테마 메타 정보 */}
+      <div className="macro-toolbar">
+        <div className="macro-status">
+          {themesMeta?.macro_event && (
+            <span className="macro-status-source">📡 {themesMeta.macro_event}</span>
+          )}
+          {themesMeta?.source && (
+            <span className="macro-status-session">🕐 {themesMeta.cached ? '캐시' : '실시간 생성'} · {themesMeta.source}</span>
+          )}
+          {themesMeta?.generated_at && (
+            <span className="macro-status-updated">
+              갱신: {new Date(themesMeta.generated_at).toLocaleString('ko-KR', { hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' })}
+            </span>
+          )}
+        </div>
+        <button
+          className="refetch-btn macro-refresh-btn"
+          onClick={() => setThemesFetchId(c => c + 1)}
+          disabled={themesLoading}
+        >
+          {themesLoading ? '⏳ 생성 중...' : '🔄 테마 재생성'}
+        </button>
+      </div>
+
+      {themesError && <ErrorBanner msg={'⚠️ 최신 테마 로딩 실패. 기본 테마를 표시합니다: ' + themesError} />}
+
       {/* 테마 선택 카드 그리드 */}
       <div className="selector-label-row">
         <span className="selector-label-icon">🎯</span>
-        <span className="selector-label-text">분석할 테마를 선택하세요</span>
-        <span className="selector-label-count">{THEME_CONFIG.length}개 테마</span>
+        <span className="selector-label-text">매크로 분석 기반 동적 테마</span>
+        <span className="selector-label-count">{themes.length}개 테마</span>
       </div>
       <div className="theme-card-grid">
-        {THEME_CONFIG.map((t, i) => {
+        {themes.map((t, i) => {
           const strengthClass = t.strength === 'STRONG' ? 'strong' : 'medium';
-          const isActive = selectedTheme === i;
+          const isActive = selectedIdx === i;
+          const sourceTag = t.source === 'core' ? '핵심' : t.source === 'macro' ? '매크로' : '';
           return (
             <button
               key={i}
               className={`theme-card ${isActive ? 'active' : ''}`}
-              onClick={() => setSelectedTheme(isActive ? null : i)}
+              onClick={() => setSelectedIdx(isActive ? null : i)}
             >
               <div className="theme-card-icon">{t.icon}</div>
               <div className="theme-card-body">
                 <div className="theme-card-header">
                   <span className="theme-card-name">{t.theme}</span>
-                  <span className={`theme-strength-badge ${strengthClass}`}>
-                    {t.strength === 'STRONG' ? '강력 추천' : '관심'}
-                  </span>
+                  <div className="theme-card-badges">
+                    {sourceTag && <span className={`theme-source-badge ${t.source}`}>{sourceTag}</span>}
+                    <span className={`theme-strength-badge ${strengthClass}`}>
+                      {t.strength === 'STRONG' ? '강력 추천' : '관심'}
+                    </span>
+                  </div>
                 </div>
                 <p className="theme-card-desc">{t.description}</p>
                 <div className="theme-card-meta">
@@ -572,41 +639,50 @@ function ThemeView() {
         })}
       </div>
 
-      {selectedTheme === null && (
+      {selectedIdx === null && (
         <div className="theme-placeholder">
           <span className="placeholder-icon">👆</span>
           <p>위에서 분석하고 싶은 테마를 선택해주세요</p>
-          <p className="placeholder-hint">선택한 테마의 실시간 시세가 표시됩니다</p>
+          <p className="placeholder-hint">매일 새로운 매크로 뉴스 분석으로 테마가 자동 생성됩니다</p>
         </div>
       )}
 
-      {selectedTheme !== null && (
+      {selectedIdx !== null && selected && (
         <>
           <LastUpdated time={lastUpdated} />
-          {loading && <LoadingSpinner />}
-          {error && <ErrorBanner msg={error} />}
+          {quotesLoading && <LoadingSpinner />}
+          {quotesError && <ErrorBanner msg={quotesError} />}
           <div className="theme-section">
             <div className="theme-header">
               <div className="theme-title-row">
-                <span className="theme-icon">{theme.icon}</span>
+                <span className="theme-icon">{selected.icon}</span>
                 <div>
-                  <h2 className="theme-name">{theme.theme}</h2>
-                  <span className={`theme-strength ${theme.strength.toLowerCase()}`}>{theme.strength}</span>
+                  <h2 className="theme-name">{selected.theme}</h2>
+                  <span className={`theme-strength ${selected.strength.toLowerCase()}`}>{selected.strength}</span>
+                  {selected.source && (
+                    <span className={`theme-source-tag ${selected.source}`} style={{marginLeft: 8}}>
+                      {selected.source === 'core' ? '🔒 핵심 테마' : selected.source === 'macro' ? '📡 매크로 분석' : ''}
+                    </span>
+                  )}
                 </div>
               </div>
-              <p className="theme-desc">{theme.description}</p>
+              <p className="theme-desc">{selected.description}</p>
+              {selected.event_date && (
+                <p className="theme-event-date">📅 기준일: {selected.event_date}</p>
+              )}
               <button
                 className="refetch-btn"
-                onClick={() => setRefetchCounter(c => c + 1)}
-                disabled={loading}
+                onClick={() => setThemesFetchId(c => c + 1)}
+                disabled={themesLoading}
               >
-                {loading ? '⏳ 재검색 중...' : '🔄 실시간 재검색'}
+                {themesLoading ? '⏳ 재생성 중...' : '🔄 실시간 재검색'}
               </button>
             </div>
             <div className="theme-stocks-grid">
-              {theme.codes.map((code, i) => {
+              {selected.codes.map((code, i) => {
                 const q = quotes[code];
                 const info = getStockInfo(code);
+                const reason = selected.reasons?.[code] || '—';
                 return (
                   <div key={i} className="theme-stock-card">
                     <div className="theme-stock-top">
@@ -623,7 +699,7 @@ function ThemeView() {
                         )}
                       </div>
                     </div>
-                    <div className="theme-stock-reason">{theme.reasons[code]}</div>
+                    <div className="theme-stock-reason">{reason}</div>
                     {q && (
                       <div className="theme-stock-extra">
                         {q.per && <span className="extra-tag">PER {q.per.toFixed(1)}</span>}
@@ -1476,6 +1552,12 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
+  // Macro analysis state (fetched from server)
+  const [macroData, setMacroData] = useState(MACRO_FALLBACK);
+  const [macroLoading, setMacroLoading] = useState(false);
+  const [macroError, setMacroError] = useState(null);
+  const [macroRefetchCounter, setMacroRefetchCounter] = useState(0);
+
   // Restore auth on mount
   useEffect(() => {
     const stored = getStoredAuth();
@@ -1485,6 +1567,26 @@ function App() {
     }
     setAuthChecked(true);
   }, []);
+
+  // Fetch macro analysis on mount and on refetch
+  useEffect(() => {
+    let cancelled = false;
+    setMacroLoading(true);
+    setMacroError(null);
+    fetchMacroAnalysis(macroRefetchCounter > 0)
+      .then(data => {
+        if (cancelled) return;
+        setMacroData(data);
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setMacroError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setMacroLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [macroRefetchCounter]);
 
   const handleAuthSuccess = (userData, tokenData) => {
     setUser(userData);
@@ -1502,22 +1604,26 @@ function App() {
 
   // Collect all codes needed across tabs
   const macroCodes = [
-    ...MACRO_DATA.beneficiary_stocks.map(s => s.code),
-    ...MACRO_DATA.damage_stocks.map(s => s.code),
+    ...(macroData?.beneficiary_stocks || []).map(s => s.code),
+    ...(macroData?.damage_stocks || []).map(s => s.code),
   ];
-  const themeCodes = THEME_CONFIG.flatMap(t => t.codes);
-
   // Fetch quotes for current tab
   const macroQuotes = useStockQuotes(macroCodes);
-  const themeQuotes = useStockQuotes(themeCodes);
   const analysisQuotes = useStockQuotes([searchCode]);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'macro':
-        return <MacroView data={MACRO_DATA} quotes={macroQuotes.quotes} />;
+        return <MacroView
+          data={macroData}
+          quotes={macroQuotes.quotes}
+          loading={macroLoading}
+          error={macroError}
+          onRefresh={() => setMacroRefetchCounter(c => c + 1)}
+          lastUpdated={macroData?.generated_at ? new Date(macroData.generated_at) : null}
+        />;
       case 'theme':
-        return <ThemeView quotes={themeQuotes.quotes} loading={themeQuotes.loading} error={themeQuotes.error} lastUpdated={themeQuotes.lastUpdated} />;
+        return <ThemeView />;
       case 'value':
         return <ValueView />;
       case 'rebalance':

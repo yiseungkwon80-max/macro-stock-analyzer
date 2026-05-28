@@ -67,6 +67,10 @@ const KOSPI_STOCKS = {
   '034730': { name: 'SK', sector: 'holding' },
   '018260': { name: '삼성에스디에스', sector: 'tech' },
   '009150': { name: '삼성전기', sector: 'tech' },
+  // Macro analysis referenced stocks (previously missing)
+  '005380': { name: '현대차', sector: 'auto' },
+  '009540': { name: 'HD현대중공업', sector: 'shipbuilding' },
+  '003490': { name: '대한항공', sector: 'airline' },
 };
 
 /**
@@ -272,6 +276,34 @@ export async function addComment(postId, content) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || '댓글 작성 실패');
+  }
+  return res.json();
+}
+
+// ==================== THEME RECOMMENDATIONS API ====================
+
+export async function fetchThemes(forceRefresh = false) {
+  const url = forceRefresh
+    ? `${API_BASE}/api/themes?refresh=1`
+    : `${API_BASE}/api/themes`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || err.detail || '테마 추천을 불러오지 못했습니다.');
+  }
+  return res.json();
+}
+
+// ==================== MACRO ANALYSIS API ====================
+
+export async function fetchMacroAnalysis(forceRefresh = false) {
+  const url = forceRefresh
+    ? `${API_BASE}/api/macro?refresh=1`
+    : `${API_BASE}/api/macro`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || err.detail || '매크로 분석을 불러오지 못했습니다.');
   }
   return res.json();
 }
