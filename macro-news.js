@@ -131,14 +131,6 @@ const EVENT_PATTERNS = [
     impactRating: 'MEDIUM',
   },
   {
-    type: 'fx',
-    keywords: ['환율', '원달러', '원/달러', '달러 강세', '달러 약세', '원화 강세', '원화 약세'],
-    title: '환율 변동',
-    icon: '💱',
-    eventType: 'fx_market',
-    impactRating: 'MEDIUM',
-  },
-  {
     type: 'geopolitics',
     keywords: ['전쟁', '분쟁', '제재', '관세', '무역전쟁', '지정학'],
     title: '지정학적 리스크',
@@ -209,7 +201,6 @@ function generateMacroAnalysis(newsItems, detectedEvents) {
     inflation: buildInflationAnalysis(topHeadlines, dateStr, session),
     gdp: buildGDPAnalysis(topHeadlines, dateStr, session),
     export: buildExportAnalysis(topHeadlines, dateStr, session),
-    fx: buildFXAnalysis(topHeadlines, dateStr, session),
     geopolitics: buildGeopoliticsAnalysis(topHeadlines, dateStr, session),
     oil: buildOilAnalysis(topHeadlines, dateStr, session),
   };
@@ -242,7 +233,6 @@ function buildRateHoldAnalysis(headlines, dateStr, session) {
       inflation_outlook: 'PCE 2.6% (안정세)',
       gdp_outlook: 'GDP 2.1% 전망',
       unemployment: '실업률 4.1% 전망',
-      exchange_rate: '₩1,390/USD (1400원선 하향 안정화)',
     },
     beneficiary_stocks: [
       { name: 'KB금융', code: '105560', expected_upside: '+5~8%', action: '매수', benefit_reason: '금리 동결로 안정적 예대마진 유지. 고배당 매력 부각' },
@@ -259,7 +249,6 @@ function buildRateHoldAnalysis(headlines, dateStr, session) {
       { sector: '반도체', impact: '수혜', reason: '업황 회복 + 금리 안정' },
       { sector: '건설', impact: '피해', reason: '고금리 지속, PF 리스크' },
       { sector: '화학', impact: '피해', reason: '업황 회복 지연' },
-      { sector: '기술/성장주', impact: '중립', reason: '추가 압박 제한적' },
       { sector: '음식료', impact: '중립', reason: '방어주 수요 안정적' },
       { sector: '자동차', impact: '중립', reason: '수출 비중에 따른 차별화' },
     ],
@@ -267,7 +256,6 @@ function buildRateHoldAnalysis(headlines, dateStr, session) {
     watch_points: [
       '다음 금통위 일정',
       '美 FOMC 의사록',
-      '원/달러 환율 추이',
       '외국인 수급 동향',
       '국내 1분기 GDP 확정치',
     ],
@@ -287,7 +275,6 @@ function buildRateHikeAnalysis(headlines, dateStr, session) {
       inflation_outlook: '물가 안정 목표 2.0%',
       gdp_outlook: 'GDP 2.0% 내외 전망',
       unemployment: '실업률 3.0% 내외',
-      exchange_rate: '₩1,390/USD (환율 방어 부담 지속)',
     },
     beneficiary_stocks: [
       { name: 'KB금융', code: '105560', expected_upside: '+10~15%', action: '매수', benefit_reason: '금리 인상으로 예대마진 개선. 순이자마진(NIM) 상승 효과' },
@@ -302,7 +289,6 @@ function buildRateHikeAnalysis(headlines, dateStr, session) {
     sector_map: [
       { sector: '은행', impact: '수혜', reason: '예대마진 개선, NIM 상승' },
       { sector: '보험', impact: '수혜', reason: '투자수익률 상승' },
-      { sector: '기술/성장주', impact: '피해', reason: '할인율 상승, 밸류에이션 압박' },
       { sector: '바이오', impact: '피해', reason: '금리 민감도, R&D 비용 부담' },
       { sector: '건설', impact: '피해', reason: '금융비용 증가, PF 우려' },
       { sector: '에너지', impact: '중립', reason: '원자재 가격과 금리 상쇄 효과' },
@@ -313,7 +299,6 @@ function buildRateHikeAnalysis(headlines, dateStr, session) {
     watch_points: [
       '다음 금통위 일정 및 금리 전망',
       '美 FOMC 의사록 및 점도표',
-      '원/달러 환율 1,400원선 (2026년 5월 현재 하향 안정화 중)',
       '가계부채 증가율 추이',
       '부동산 PF 연체율 동향',
     ],
@@ -333,7 +318,6 @@ function buildRateCutAnalysis(headlines, dateStr, session) {
       inflation_outlook: '물가 안정세',
       gdp_outlook: 'GDP 성장률 개선 기대',
       unemployment: '실업률 안정',
-      exchange_rate: '₩1,390/USD (금리 인하 시 환율 상승 압력 가능)',
     },
     beneficiary_stocks: [
       { name: 'NAVER', code: '035420', expected_upside: '+10~15%', action: '매수', benefit_reason: '금리 인하로 성장주 밸류에이션 회복' },
@@ -345,7 +329,6 @@ function buildRateCutAnalysis(headlines, dateStr, session) {
       { name: '신한지주', code: '055550', expected_downside: '-4~7%', action: '비중축소', damage_reason: '대출 금리 하락으로 수익성 둔화' },
     ],
     sector_map: [
-      { sector: '기술/성장주', impact: '수혜', reason: '할인율 하락, 밸류에이션 회복' },
       { sector: '바이오', impact: '수혜', reason: '금리 민감도 완화, R&D 비용 감소' },
       { sector: '건설', impact: '수혜', reason: '금융비용 감소, PF 부담 완화' },
       { sector: '은행', impact: '피해', reason: '예대마진 축소' },
@@ -358,7 +341,6 @@ function buildRateCutAnalysis(headlines, dateStr, session) {
     watch_points: [
       '추가 금리 인하 가능성',
       '美 FOMC 금리 전망',
-      '원/달러 환율 1,350원대 (추가 하락 시 수출주 부담)',
       '국내 부동산 시장 회복 신호',
       '소비자심리지수 추이',
     ],
@@ -378,7 +360,6 @@ function buildInflationAnalysis(headlines, dateStr, session) {
       inflation_outlook: 'PCE 2.6% (변동 가능)',
       gdp_outlook: 'GDP 2.0% 내외',
       unemployment: '실업률 4.1% 내외',
-      exchange_rate: '₩1,390/USD (수입물가 하향 안정)',
     },
     beneficiary_stocks: [
       { name: '삼성전자', code: '005930', expected_upside: '+3~5%', action: '매수', benefit_reason: '물가 안정 → 금리 인하 기대 → IT 수혜' },
@@ -391,7 +372,6 @@ function buildInflationAnalysis(headlines, dateStr, session) {
     sector_map: [
       { sector: '반도체', impact: '수혜', reason: '금리 인하 기대 수혜' },
       { sector: '은행', impact: '수혜', reason: '고배당 매력 지속' },
-      { sector: '기술/성장주', impact: '수혜', reason: '금리 인하 기대 반영' },
       { sector: '화학', impact: '피해', reason: '원자재 가격 변동성' },
       { sector: '건설', impact: '중립', reason: '물가-금리 연계성 주시' },
       { sector: '에너지', impact: '중립', reason: '유가와 물가 연동' },
@@ -404,7 +384,6 @@ function buildInflationAnalysis(headlines, dateStr, session) {
       '에너지·식품 가격 추이',
       '근원 CPI vs 헤드라인 CPI',
       '美 FOMC 금리 전망',
-      '원/달러 환율 변동',
     ],
   };
 }
@@ -422,7 +401,6 @@ function buildGDPAnalysis(headlines, dateStr, session) {
       inflation_outlook: 'PCE 2.6%',
       gdp_outlook: 'GDP 1.5~2.5% 전망',
       unemployment: '실업률 4.0% 내외',
-      exchange_rate: '₩1,390/USD (순수출 기여도 긍정적)',
     },
     beneficiary_stocks: [
       { name: '삼성전자', code: '005930', expected_upside: '+3~5%', action: '매수', benefit_reason: '경기 회복 시 반도체 수요 증가' },
@@ -434,7 +412,6 @@ function buildGDPAnalysis(headlines, dateStr, session) {
       { sector: '철강/소재', impact: '수혜', reason: '인프라 투자 확대' },
       { sector: '은행', impact: '수혜', reason: '대출 수요 증가' },
       { sector: '음식료', impact: '중립', reason: '내수 방어적 성격' },
-      { sector: '기술/성장주', impact: '중립', reason: '경기-금리 교차 영향' },
       { sector: '건설', impact: '중립', reason: '경기 여건에 민감' },
       { sector: '에너지', impact: '중립', reason: '원자재 수요 연동' },
       { sector: '자동차', impact: '중립', reason: '소비 경기와 연계' },
@@ -463,7 +440,6 @@ function buildExportAnalysis(headlines, dateStr, session) {
       inflation_outlook: '원자재 가격 영향',
       gdp_outlook: 'GDP 2.0% 내외',
       unemployment: '실업률 3.5% 내외',
-      exchange_rate: '₩1,390/USD (원화 약세 수출 경쟁력)',
     },
     beneficiary_stocks: [
       { name: '삼성전자', code: '005930', expected_upside: '+3~6%', action: '매수', benefit_reason: '반도체 수출 호조 지속' },
@@ -479,59 +455,13 @@ function buildExportAnalysis(headlines, dateStr, session) {
       { sector: '음식료', impact: '중립', reason: '내수 중심' },
       { sector: '건설', impact: '중립', reason: '내수 경기 의존' },
       { sector: '에너지', impact: '중립', reason: '원유 수입 비용 영향' },
-      { sector: '기술/성장주', impact: '중립', reason: '환율·글로벌 경기 연동' },
     ],
     hedge_strategy: '수출 호조 국면에서는 반도체·자동차·조선 등 주력 수출주 비중을 확대하고, 환율 상승(원화 약세)에 대비한 환헤지 전략을 병행하시기 바랍니다.',
     watch_points: [
       '월간 수출입 동향',
-      '원/달러 환율 추이',
       '美·中 경기 지표',
       '반도체 수출 단가',
       '글로벌 공급망 동향',
-    ],
-  };
-}
-
-function buildFXAnalysis(headlines, dateStr, session) {
-  return {
-    summary: `원/달러 환율이 변동하며 수출주와 수입 원자재 관련주에 차별화된 영향을 미치고 있습니다. ${headlines[0] || ''} 환율 상승 시 수출주 수혜, 환율 하락 시 내수·소비재에 긍정적입니다.`,
-    macro_event: `환율 변동 (${session} 분석)`,
-    event_date: dateStr,
-    event_type: 'fx_market',
-    impact_rating: 'MEDIUM',
-    key_data: {
-      rate_decision: '환율 연계',
-      policy_stance: '외환시장 안정화',
-      inflation_outlook: '수입물가 영향',
-      gdp_outlook: 'GDP 2.0% 내외',
-      unemployment: '실업률 3.5% 내외',
-      exchange_rate: '₩1,390/USD (1400원선 하향 안정화 중)',
-    },
-    beneficiary_stocks: [
-      { name: '삼성전자', code: '005930', expected_upside: '+3~6%', action: '매수', benefit_reason: '환율 상승 시 수출 채산성 개선' },
-      { name: '현대차', code: '005380', expected_upside: '+3~5%', action: '매수', benefit_reason: '원화 약세 → 해외 매출 환산 이익' },
-      { name: 'SK하이닉스', code: '000660', expected_upside: '+3~5%', action: '매수', benefit_reason: '달러 표시 매출 비중 높음' },
-    ],
-    damage_stocks: [
-      { name: '대한항공', code: '003490', expected_downside: '-3~5%', action: '관망', damage_reason: '원화 약세 시 항공유·리스료 부담 증가' },
-    ],
-    sector_map: [
-      { sector: '반도체', impact: '수혜', reason: '원화 약세 → 수출 채산성 개선' },
-      { sector: '자동차', impact: '수혜', reason: '해외 매출 환산 이익' },
-      { sector: '항공', impact: '피해', reason: '유류비·리스료 부담' },
-      { sector: '화학', impact: '피해', reason: '원재료 수입 비용 증가' },
-      { sector: '은행', impact: '중립', reason: '외환 거래 수익' },
-      { sector: '음식료', impact: '중립', reason: '수입 원재료 가격 영향' },
-      { sector: '기술/성장주', impact: '중립', reason: '글로벌 매출 비중별 차별화' },
-      { sector: '에너지', impact: '중립', reason: '원유 수입 비용 영향' },
-    ],
-    hedge_strategy: '환율 변동 국면에서는 반도체·자동차 등 수출주 비중 확대가 유효합니다. 환율 하락 리스크에 대비해 달러선물 ETF 또는 달러예금으로 포트폴리오 환헤지를 권장합니다.',
-    watch_points: [
-      '원/달러 환율 1,350~1,450원대 (2026년 5월 1,390원선 안정화)',
-      '美 연준 금리 정책',
-      '무역수지·경상수지 추이',
-      '외국인 채권·주식 자금 동향',
-      '中 위안화 환율',
     ],
   };
 }
@@ -549,7 +479,6 @@ function buildGeopoliticsAnalysis(headlines, dateStr, session) {
       inflation_outlook: '원자재 가격 상승 우려',
       gdp_outlook: 'GDP 1.8% 내외',
       unemployment: '실업률 3.5% 내외',
-      exchange_rate: '₩1,390/USD (안전자산 선호 속 원화 약세)',
     },
     beneficiary_stocks: [
       { name: '한화에어로스페이스', code: '012450', expected_upside: '+10~15%', action: '매수', benefit_reason: '글로벌 방위비 증액 + K-방산 수출 호조' },
@@ -564,7 +493,6 @@ function buildGeopoliticsAnalysis(headlines, dateStr, session) {
       { sector: '방산', impact: '수혜', reason: '국방비 증액 전망' },
       { sector: '에너지', impact: '수혜', reason: '유가 상승 수혜' },
       { sector: '금/원자재', impact: '수혜', reason: '안전자산 선호' },
-      { sector: '기술/성장주', impact: '피해', reason: '위험 회피 심리' },
       { sector: '항공/여행', impact: '피해', reason: '여행 수요 위축' },
       { sector: '건설', impact: '중립', reason: '해외 건설 수주 영향' },
       { sector: '음식료', impact: '중립', reason: '내수 방어주 부각' },
@@ -594,7 +522,6 @@ function buildOilAnalysis(headlines, dateStr, session) {
       inflation_outlook: '에너지 가격 영향',
       gdp_outlook: 'GDP 2.0% 내외',
       unemployment: '실업률 3.5% 내외',
-      exchange_rate: '₩1,390/USD (원유 수입비용 영향)',
     },
     beneficiary_stocks: [
       { name: 'S-Oil', code: '010950', expected_upside: '+5~8%', action: '관심', benefit_reason: '유가 상승 → 정제마진 개선' },
@@ -613,7 +540,6 @@ function buildOilAnalysis(headlines, dateStr, session) {
       { sector: '자동차', impact: '중립', reason: '전기차 전환 가속' },
       { sector: '건설', impact: '중립', reason: '중동 건설 수주 영향' },
       { sector: '음식료', impact: '중립', reason: '물류비 간접 영향' },
-      { sector: '기술/성장주', impact: '중립', reason: '직접 영향 제한적' },
     ],
     hedge_strategy: '유가 변동 국면에서는 에너지주와 항공·운송주를 균형 있게 편입하여 유가 방향성에 따른 리스크를 상쇄하시기 바랍니다. 원유 ETF로 직접 투자도 고려할 수 있습니다.',
     watch_points: [
@@ -645,7 +571,6 @@ function generateDefaultAnalysis(newsItems) {
       inflation_outlook: '안정세',
       gdp_outlook: 'GDP 2.0% 내외',
       unemployment: '실업률 3.0% 내외',
-      exchange_rate: '₩1,390/USD (1400원선 하향 안정화)',
     },
     beneficiary_stocks: [
       { name: '삼성전자', code: '005930', expected_upside: '+3~5%', action: '관심', benefit_reason: '반도체 업황 회복 + 글로벌 AI 수요 증가' },
@@ -658,7 +583,6 @@ function generateDefaultAnalysis(newsItems) {
       { sector: '반도체', impact: '수혜', reason: 'AI 수요, 업황 회복' },
       { sector: '은행', impact: '수혜', reason: '안정적 예대마진' },
       { sector: '건설', impact: '피해', reason: 'PF 리스크, 수주 감소' },
-      { sector: '기술/성장주', impact: '중립', reason: '종목별 차별화' },
       { sector: '바이오', impact: '중립', reason: 'R&D 모멘텀 개별적' },
       { sector: '에너지', impact: '중립', reason: '유가 변동성 주시' },
       { sector: '음식료', impact: '중립', reason: '내수 소비 안정적' },
@@ -667,7 +591,6 @@ function generateDefaultAnalysis(newsItems) {
     hedge_strategy: '복합적 매크로 환경에서는 섹터별 분산 투자가 중요합니다. 반도체·금융주 중심의 코어 포트폴리오에 배당주와 금 ETF를 혼합하여 변동성에 대비하시기 바랍니다.',
     watch_points: [
       '美 FOMC 향방',
-      '원/달러 환율 추이',
       '국내 수출 지표',
       '외국인 수급 동향',
       '국제 유가 변동',

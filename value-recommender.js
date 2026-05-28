@@ -52,10 +52,6 @@ const SECTOR_VALUE_POOL = {
     { code: '000660', name: 'SK하이닉스', pbr: 0.78, per: 8.5, divYield: 1.2, strengths: ['HBM 시장 독점', 'PER 8.5배 저평가', '엔비디아향 매출 급증', 'DDR5 전환 수혜'], grade: 'B+' },
     { code: '009150', name: '삼성전기', pbr: 0.95, per: 12.0, divYield: 3.5, strengths: ['PER 12배 저평가', 'MLCC 업황 회복', '전장용 부품 성장', '배당수익률 3.5%'], grade: 'B' },
   ],
-  '기술/성장주': [
-    { code: '035420', name: 'NAVER', pbr: 0.75, per: 18.0, divYield: 1.5, strengths: ['PER 18배 역사적 저점', '커머스 턴어라운드', 'AI 검색 모멘텀', '자사주 소각 1조원'], grade: 'B+' },
-    { code: '018260', name: '삼성SDS', pbr: 0.82, per: 9.0, divYield: 2.8, strengths: ['PER 9배 저평가', '삼성 클라우드 수혜', '물류·AI SaaS 전환', '현금성자산 4.5조원'], grade: 'B+' },
-  ],
   '통신': [
     { code: '030200', name: 'KT', pbr: 0.45, per: 6.8, divYield: 6.5, strengths: ['배당수익률 6.5%', '통신 본업 안정적', 'IDC·클라우드 성장', '자사주 매입 지속'], grade: 'A' },
     { code: '017670', name: 'SK텔레콤', pbr: 0.52, per: 7.2, divYield: 6.1, strengths: ['배당수익률 6.1%', 'AI 인프라 수혜', '자회사 IPO 기대', '5G 가입자 확대'], grade: 'A' },
@@ -71,57 +67,40 @@ const GROUP_LABELS = {
   '에너지': { group: '에너지·정유 고배당주', icon: '⚡', desc: '배당수익률 5~7% + 정유·배터리 캐시카우. 유가 변동 시 가치 매수 기회' },
   '화학': { group: '화학·소재 실적 턴어라운드', icon: '⚗️', desc: '실적 바닥 통과 + 업황 회복 초입. PBR 0.3x대 역대 최저 수준' },
   '반도체': { group: '반도체·IT 가치주', icon: '💾', desc: 'PER 8~12배 저평가 구간. AI·HBM 수요로 실적 모멘텀 강화' },
-  '기술/성장주': { group: '플랫폼·IT 저평가주', icon: '🚀', desc: 'PER 역사적 저점. AI·클라우드 전환 모멘텀 보유한 가치주' },
   '통신': { group: '통신·유틸리티 고배당주', icon: '📡', desc: '배당수익률 5~7% + 방어적 비즈니스. AI 인프라 수혜 기대' },
 };
 
-// ── 항상 표시할 핵심 저평가 그룹 ──
-function getCoreGroups() {
-  return ['은행', '에너지']; // 은행(국민 관심 1순위), 에너지(고배당 1순위)
-}
-
 /**
- * 매크로 이벤트 영향 섹터 → 저평가 그룹 동적 생성
+ * 매크로 이벤트 영향 섹터 → 저평가 그룹 100% 동적 생성
+ * - core 고정 그룹 없음 (은행·에너지·통신 강제 추가 제거)
+ * - sector_map 에서 '수혜'/'피해' 섹터만 표시
+ * - 종목도 SECTOR_VALUE_POOL에서만 가져오되, 해당 섹터가 이벤트 영향권일 때만 표시
  */
 function buildValueGroups(macroAnalysis) {
   const { sector_map = [], macro_event = '', impact_rating = 'MEDIUM' } = macroAnalysis;
   const eventLabel = macro_event.replace(/\s*\(.*?\)\s*/g, '').trim();
 
-  // 1. 영향받는 섹터 추출 (수혜 + 피해 모두 → 저평가 기회)
+  // 영향받는 섹터만 추출 (수혜 + 피해 → 저평가 기회)
   const affectedSectors = sector_map
     .filter(s => s.impact === '수혜' || s.impact === '피해')
     .map(s => s.sector);
 
-  // 2. 항상 표시할 핵심 그룹
-  const coreSectors = getCoreGroups();
-
-  // 3. 모든 대상 섹터 (중복 제거, 핵심 + 이벤트 영향)
-  const allSectors = [...new Set([...coreSectors, ...affectedSectors])];
-
-  // 4. 통신은 항상 추가 (고배당 대표)
-  if (!allSectors.includes('통신')) allSectors.push('통신');
-
   const groups = [];
 
-  for (const sector of allSectors) {
+  for (const sector of affectedSectors) {
     const label = GROUP_LABELS[sector];
     const stocks = SECTOR_VALUE_POOL[sector];
     if (!label || !stocks || stocks.length === 0) continue;
 
-    // 이벤트 영향 설명 추가
-    const isAffected = affectedSectors.includes(sector);
     const secInfo = sector_map.find(s => s.sector === sector);
-    const contextNote = isAffected && secInfo
-      ? `${secInfo.impact === '수혜' ? '✅' : '⚠️'} ${eventLabel} → ${secInfo.reason}`
-      : '경기 방어적 가치주. 안정적 배당 수익';
 
     groups.push({
       group: label.group,
       icon: label.icon,
       description: `${label.desc}
-${contextNote}`,
-      source: isAffected ? 'macro' : 'core',
-      strength: secInfo?.impact === '수혜' ? 'STRONG' : secInfo?.impact === '피해' ? 'CONTRARIAN' : 'NEUTRAL',
+${secInfo.impact === '수혜' ? '✅' : '⚠️'} ${eventLabel} → ${secInfo.reason}`,
+      source: 'macro',
+      strength: secInfo.impact === '수혜' ? 'STRONG' : 'CONTRARIAN',
       stocks,
     });
   }
